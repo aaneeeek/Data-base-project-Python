@@ -1,26 +1,46 @@
-import subprocess
-import os
-from BPlusTree import BPlusTree
+from DB_commands import DBMS
+from colorama import Fore
 
+if __name__ == "__main__":
+    dbms = DBMS()
+    while True:
+        command: str = input(Fore.LIGHTYELLOW_EX + "Type in VinaSQL command: ")
+        dbms.collect_commands(command)
 
-def create_database(name: str) -> None:
-    folder = "csv_databases"
-    os.makedirs(folder, exist_ok=True)
-    filepath = os.path.join(folder, f"{name}.csv")
-    if os.path.exists(filepath):
-        print(f"Error DataBase {name} already exist You can not create two databases with the same name")
-    else:
-        with open(filepath, "w") as file:
-            file.close()
-
-
-def create_table(name: str, attributes: dict, key: list):
-    pass
-
-
-Tree = BPlusTree()
-Tree.root_node.move_to_leaf((2, 0), "insert")
-Tree.root_node.move_to_leaf((3, 0), "insert")
-Tree.root_node.move_to_leaf((4, 0), "insert")
-Tree.root_node.move_to_leaf((5, 0), "insert")
-Tree.root_node.move_to_leaf((6, 0), "insert")
+# Tree = BPlusTree()
+# Tree.root_node.move_to_leaf((2, 0), "insert")
+# Tree.root_node.move_to_leaf((3, 0), "insert")
+# Tree.root_node.move_to_leaf((4, 0), "insert")
+# Tree.root_node.move_to_leaf((5, 0), "insert")
+# Tree.root_node.move_to_leaf((6, 0), "insert")
+# Tree.root_node.move_to_leaf((7, 0), "insert")
+# Tree.root_node.move_to_leaf((8, 0), "insert")
+# Tree.root_node.move_to_leaf((9, 0), "insert")
+# Tree.root_node.move_to_leaf((10, 0), "insert")
+# Tree.root_node.move_to_leaf((11, 0), "insert")
+# Tree.root_node.move_to_leaf((12, 0), "insert")
+# Tree.root_node.move_to_leaf((13, 0), "insert")
+# Tree.root_node.move_to_leaf((14, 0), "insert")
+# Tree.root_node.move_to_leaf((15, 0), "insert")
+# Tree.root_node.move_to_leaf((16, 0), "insert")
+# Tree.root_node.move_to_leaf((17, 0), "insert")
+# Tree.root_node.move_to_leaf((18, 3), "insert")
+# Tree.root_node.move_to_leaf((18, 0), "search")
+# Tree.root_node.move_to_leaf((19, 5), "insert")
+# Tree.root_node.move_to_leaf((19, 0), "search")
+# Tree.root_node.move_to_leaf((20, 5), "insert")
+# Tree.root_node.move_to_leaf((20, 0), "search")
+# Tree.root_node.move_to_leaf((21, 5), "insert")
+# Tree.root_node.move_to_leaf((22, 5), "insert")
+# Tree.root_node.move_to_leaf((23, 5), "insert")
+# Tree.root_node.move_to_leaf((24, 8), "insert")
+#
+# Tree.root_node.move_to_leaf((19, 0), "search")
+# Tree.root_node.move_to_leaf((20, 0), "search")
+# Tree.root_node.move_to_leaf((21, 0), "search")
+# Tree.root_node.move_to_leaf((22, 0), "search")
+# Tree.root_node.move_to_leaf((23, 0), "search")
+# Tree.root_node.move_to_leaf((24, 0), "search")
+# Tree.root_node.move_to_leaf((1, 0), "search")
+#
+# print(f"Tree height = {Tree.height}")

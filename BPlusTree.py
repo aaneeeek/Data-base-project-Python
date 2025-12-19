@@ -1,5 +1,4 @@
 import math
-import matplotlib.pyplot as plt
 
 
 class BPlusTreeNode:
@@ -27,7 +26,6 @@ class BPlusTreeNode:
         else:
             assert len(self.children) == len(self.keys) + 1, ("Constraint between keys length and children length is "
                                                               "not satisfied")
-            print(f"sorting node children {self.keys}")
             for index, child in enumerate(self.children):
                 for i in range(len(self.keys)):
                     if i == 0 and child.keys[-1][0] < self.keys[i][0]:
@@ -46,40 +44,30 @@ class BPlusTreeNode:
                         self.children[index] = intermediary
                         break
                 child.pos = index
-            print("sorting complete")
 
-    def move_to_leaf(self, key: tuple, action: str):
+    def move_to_leaf(self, key: tuple, action: str) -> tuple:
         if not self.is_leaf_node:
             for i, k in enumerate(self.keys):
                 if i == 0 and key[0] < k[0]:
-                    self.children[0].move_to_leaf(key, action)
-                    break
+                    return self.children[0].move_to_leaf(key, action)
                 elif i == len(self.keys) - 1 and key[0] >= k[0]:
-                    self.children[-1].move_to_leaf(key, action)
-                    break
+                    return self.children[-1].move_to_leaf(key, action)
                 elif i < len(self.keys) - 1 and k[0] <= key[0] < self.keys[i + 1][0]:
-                    print(self)
-                    print(self.keys)
-                    self.children[i + 1].move_to_leaf(key, action)
-                    break
+                    return self.children[i + 1].move_to_leaf(key, action)
         else:
             if action == "insert":
                 self.leaf_insert_key(key)
+                return 0, 0, 0
             if action == "search":
-                found = False
                 for k in self.keys:
                     if k[0] == key[0]:
-                        print(f"found index {key[0]}, its value is {k[1]}")
-                        found = True
-                        break
-                if not found:
-                    print(f"##################{key[0]}Error Not Found#####################")
+                        return k
+                return -1, 0, 0
 
     def parent_insert_key(self, key: tuple, new_child: "BPlusTreeNode", modified_child: "BPlusTreeNode"):
         assert not self.is_leaf_node, "The node must be a parent node"
         assert len(self.keys) <= self.order - 1
         if self.parent and len(self.keys) + 1 <= self.order - 1:
-            print(f"Inserting key inside free space {key}")
             self.keys.append(key)
             self.keys.sort()
             self.children[modified_child.pos] = modified_child
@@ -87,9 +75,7 @@ class BPlusTreeNode:
             self.children[modified_child.pos+1].parent = self
             self.sort_children()
         else:
-            print(f"splitting node due to insufficient space inorder to insert key {key}")
             # create a new list of keys that contains **self.keys and the new key
-            print(f"This is the parent node to be split {self}")
             new_keys = self.keys + [key]
             new_keys.sort()
             index = math.floor(len(new_keys)/2)
@@ -123,14 +109,9 @@ class BPlusTreeNode:
             else:
                 # if not, set its parent to the newly created parent sibling object
                 new_parent_sibling.children[modified_child.pos - len(self.keys)].parent = new_parent_sibling
-            print(f"this is self{self}")
-            print(f"this is new sibling {new_parent_sibling}")
             if self.parent:
-                print("Node has been split but parent is full, splitting parent to create allowance for all children")
                 self.parent.parent_insert_key(new_keys[index-1], new_parent_sibling, self)
             else:
-                print("No parent to this node, ...creating a parent")
-                print(self)
                 self.create_new_parent(self, new_parent_sibling, new_keys[index-1])
 
     def create_new_parent(self, left_child: "BPlusTreeNode", right_child: "BPlusTreeNode", key: tuple):
@@ -140,22 +121,21 @@ class BPlusTreeNode:
         new_parent.children[1].parent = new_parent
         self.tree.root_node = new_parent
         self.tree.height = self.level+1
-        print("New Root created")
 
     def leaf_insert_key(self, key: tuple):
+        if self.keys == [(1, 1, 1)]:
+            self.keys = [key]
+            return
         assert key not in self.keys, "Cannot add two keys with the same index on the same node"
         if len(self.keys) + 1 <= self.order - 1 and self.is_leaf_node:
-            print(f"Adding extra key {key} to node")
             self.keys.append(key)
             self.keys.sort()
         elif len(self.keys) + 1 > self.order - 1 and self.is_leaf_node and self.parent:
-            print("Cannot add key, node is full. splitting current node to to two")
             if len(self.parent.keys) + 1 <= self.order - 1:
                 self.split_leaf_node(key)
             else:
                 self.split_parent_node(key)
         elif len(self.keys) + 1 > self.order - 1 and self.is_leaf_node and not self.parent:
-            print("This leaf node is orphan creating a sibling and a parent for it")
             new_keys = self.keys + [key]
             new_keys.sort()
             index = new_keys.index(key)
@@ -171,7 +151,6 @@ class BPlusTreeNode:
 
     def split_leaf_node(self, key: tuple):
         assert self.is_leaf_node, "This method can only be used on leaf nodes"
-        print("Starting leaf node split")
         keys: list[tuple] = self.keys + [key]
         keys.sort()
         index = keys.index(key)
@@ -192,7 +171,6 @@ class BPlusTreeNode:
         # insertion so that the splitting will be done automatically
         # the current node must be a leaf node
         assert self.is_leaf_node, "This method is only for leaf Nodes"
-        print("---")
         keys: list[tuple] = self.keys + [key]
         keys.sort()
         index = keys.index(key)

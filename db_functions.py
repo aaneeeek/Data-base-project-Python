@@ -7,31 +7,35 @@ FREE_START_OFFSET = 6
 FREE_END_OFFSET = 8
 
 
-def get_slot_count(page):
+def get_slot_count(page: bytearray) -> int:
     return int.from_bytes(page[SLOT_COUNT_OFFSET:SLOT_COUNT_OFFSET+2], "little")
 
 
-def set_slot_count(page, count):
+def set_slot_count(page: bytearray, count) -> bytearray:
+    print("new count = ", count)
     page[SLOT_COUNT_OFFSET:SLOT_COUNT_OFFSET+2] = count.to_bytes(2, "little")
+    return page
 
 
-def get_free_start(page):
+def get_free_start(page: bytearray) -> int:
     return int.from_bytes(page[FREE_START_OFFSET:FREE_START_OFFSET+2], "little")
 
 
-def set_free_start(page, value):
+def set_free_start(page: bytearray, value: int) -> bytearray:
     page[FREE_START_OFFSET:FREE_START_OFFSET+2] = value.to_bytes(2, "little")
+    return page
 
 
-def get_free_end(page):
+def get_free_end(page: bytearray) -> int:
     return int.from_bytes(page[FREE_END_OFFSET:FREE_END_OFFSET+2], "little")
 
 
-def set_free_end(page, value):
+def set_free_end(page: bytearray, value: int) -> bytearray:
     page[FREE_END_OFFSET:FREE_END_OFFSET+2] = value.to_bytes(2, "little")
+    return page
 
 
-def add_slot(page, row_offset: int, row_length: int) -> int:
+def add_slot(page, row_offset: int, row_length: int) -> tuple[int, bytearray]:
     slot_count = get_slot_count(page)
     free_start = get_free_start(page)
     # Position where this slot entry will be written
@@ -40,9 +44,9 @@ def add_slot(page, row_offset: int, row_length: int) -> int:
     page[slot_pos:slot_pos+2] = row_offset.to_bytes(2, "little")
     page[slot_pos+2:slot_pos+4] = row_length.to_bytes(2, "little")
     # Update header
-    set_slot_count(page, slot_count + 1)
-    set_free_start(page, free_start + SLOT_SIZE)
-    return slot_count
+    modified_page1 = set_slot_count(page, slot_count + 1)
+    modified_page2 = set_free_start(modified_page1, free_start + SLOT_SIZE)
+    return slot_count, modified_page2
 
 
 def insert_row(page: bytearray, row_bytes: bytes) -> tuple[int, bytearray]:
@@ -54,20 +58,18 @@ def insert_row(page: bytearray, row_bytes: bytes) -> tuple[int, bytearray]:
         return -1, bytearray(0)
     # condition has to be added to ensure the page is not overfilled
     page[new_row_offset: free_end] = row_bytes
-    set_free_end(page, new_row_offset)
-    slot_id = add_slot(page, new_row_offset, row_length)
-    return slot_id, page
+    modified_page1 = set_free_end(page, new_row_offset)
+    slot_id, modified_page2 = add_slot(modified_page1, new_row_offset, row_length)
+    return slot_id, modified_page2
 
 
 def read_row(page: bytearray, slot_count: int) -> str:
-    free_start = get_free_start(page)  # this is the current height of the slot section starting from the end of the
-    # header section
     # since a slot row is represented by 4 bytes (2 for row offset and 2 for row length), we will count by 4s
-    slot_row_position = 4 * slot_count
-    row_offset = int.from_bytes(page[slot_row_position: slot_row_position+2])
-    row_length = int.from_bytes(page[slot_row_position+2: slot_row_position+4])
-    row_bytes: bytes = page[row_offset: row_length]
-    return str(row_bytes)
+    slot_row_position = (SLOT_SIZE * slot_count) + HEADER_SIZE
+    row_offset = int.from_bytes(page[slot_row_position: slot_row_position+2], "little")
+    row_length = int.from_bytes(page[slot_row_position+2: slot_row_position+4], "little")
+    row_bytes = page[row_offset: row_offset+row_length]
+    return row_bytes.decode("utf-8")
 
 
 def create_page(page_id: int) -> bytearray:
